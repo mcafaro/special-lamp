@@ -18,19 +18,38 @@ jobs:
   # This workflow contains a single job called "build"
   build:
     # The type of runner that the job will run on
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
+      - name: Enable core dumps (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gdb
+          ulimit -c unlimited
+          echo '/tmp/core.%e.%p' | sudo tee /proc/sys/kernel/core_pattern
 
       - name: Setup MATLAB
         uses: matlab-actions/setup-matlab@v2
+
+      - name: Analyze core dumps (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          MPM=$(which mpm || true)
+          if [ -z "$MPM" ]; then
+            echo "mpm binary not found"
+            exit 0
+          fi
+          for core in /tmp/core.mpm.*; do
+            if [ -f "$core" ]; then
+              echo "Core dump found: $core"
+              gdb -batch -ex "thread apply all bt" "$MPM" "$core" > "${core}.stacktrace.txt" || true
+            fi
+          done
         
       - name: Export TMPDIR and TEMP to Actions env
         run: |
@@ -47,6 +66,10 @@ jobs:
             ${{ env.TEMP }}/mathworks_*.log
             ${{ env.TMPDIR }}/mathworks_*.log
             /tmp/mathworks_*.log
+            /tmp/core.mpm.*.stacktrace.txt
+            /cores/core.*.stacktrace.txt
+            /tmp/core.mpm.*
+            /cores/core.*
           if-no-files-found: ignore
 
       - name: Show temp variables
