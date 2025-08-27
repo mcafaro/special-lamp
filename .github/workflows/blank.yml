@@ -38,9 +38,10 @@ jobs:
           name: mw-logs-${{ github.job }}-${{ matrix.os }}
           path: |
             ${{ env.MATLAB_LOG_DIR }}
-            $TEMP/mathworks_*.log
-            $TMPDIR/mathworks_*.log
+            ${{ env.TEMP }}/mathworks_*.log
+            ${{ env.TMPDIR }}/mathworks_*.log
             /tmp/mathworks_*.log
+          if-no-files-found: ignore
 
       - name: Show temp variables
         run: |
@@ -49,5 +50,5 @@ jobs:
           echo "TMP: $TMP"
           echo "RUNNER_TEMP: $RUNNER_TEMP"
             
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
+      # - name: Setup tmate session
+      #   uses: mxschmitt/action-tmate@v3
