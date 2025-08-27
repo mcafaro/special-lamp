@@ -39,7 +39,7 @@ jobs:
       - name: Analyze core dumps (Linux)
         if: runner.os == 'Linux'
         run: |
-          MPM=$(which mpm || true)
+          MPM=$RUNNER_TEMP/mpm
           if [ -z "$MPM" ]; then
             echo "mpm binary not found"
             exit 0
