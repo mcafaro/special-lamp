@@ -33,21 +33,32 @@ jobs:
           ulimit -c unlimited
           echo '/tmp/core.%e.%p' | sudo tee /proc/sys/kernel/core_pattern
 
+      - name: Enable core dumps (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          ulimit -c unlimited
+          sudo sysctl -w kern.coredump=1
+
       - name: Setup MATLAB
         uses: matlab-actions/setup-matlab@v2
 
       - name: Analyze core dumps (Linux)
         if: runner.os == 'Linux'
         run: |
-          MPM=$RUNNER_TEMP/mpm
-          if [ -z "$MPM" ]; then
-            echo "mpm binary not found"
-            exit 0
-          fi
           for core in /tmp/core.mpm.*; do
             if [ -f "$core" ]; then
               echo "Core dump found: $core"
-              gdb -batch -ex "thread apply all bt" "$MPM" "$core" > "${core}.stacktrace.txt" || true
+              gdb -batch -ex "thread apply all bt" "$RUNNER_TEMP/mpm" "$core" > "${core}.stacktrace.txt" || true
+            fi
+          done
+
+      - name: Analyze core dumps (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          for core in /cores/core.*; do
+            if [ -f "$core" ]; then
+              echo "Core dump found: $core"
+              lldb --batch -o "target create $RUNNER_TEMP/mpm" -o "core load $core" -o "bt all" -o "quit" > "${core}.stacktrace.txt" || true
             fi
           done
         
