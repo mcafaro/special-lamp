@@ -32,6 +32,12 @@ jobs:
       - name: Setup MATLAB
         uses: matlab-actions/setup-matlab@v2
         
+      - name: Export TMPDIR and TEMP to Actions env
+        run: |
+          echo "TMPDIR=$TMPDIR" >> $GITHUB_ENV
+          echo "TEMP=$TEMP" >> $GITHUB_ENV
+        shell: bash
+        
       - name: Upload MPM and MATLAB logs
         uses: actions/upload-artifact@v4
         with:
