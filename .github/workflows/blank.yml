@@ -28,10 +28,26 @@ jobs:
       # Runs a single command using the runners shell
       - name: Run a one-line script
         run: echo Hello, world!
+
+      - name: Setup MATLAB
+        uses: matlab-actions/setup-matlab@v2
         
+      - name: Upload MPM and MATLAB logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: mw-logs-${{ github.job }}-${{ matrix.os }}
+          path: |
+            ${{ env.MATLAB_LOG_DIR }}
+            $TEMP/mathworks_*.log
+            $TMPDIR/mathworks_*.log
+            /tmp/mathworks_*.log
+
       - name: Show temp variables
         run: |
           echo "TMPDIR: $TMPDIR"
           echo "TEMP: $TEMP"
           echo "TMP: $TMP"
           echo "RUNNER_TEMP: $RUNNER_TEMP"
+            
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
